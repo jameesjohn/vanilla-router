@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <style>
+    nav {
+      display: flex;
+      justify-content: center;
+    }
+    nav a {
+      border: solid 1px #cccccc;
+      text-decoration: none;
+      color: #a1a1a1;
+      padding: 10px 20px;
+      text-align: center;
+      box-shadow: 0 0 1px #cccccc;
+      margin-right: 5px;
+      transition: all .5s;
+    }
+    nav a:hover {
+      border-color: black;
+      color: black;
+      box-shadow: 0 0 20px #bdbdbd;
+    }
+
+  </style>
+</head>
+<body>
+  <header>
+    <nav>
+      <a href="" data-router-name='first'>First Page</a>
+      <a href="" data-router-name='second'>Second Page</a>
+      <a href="" data-router-name='third'>Third Page</a>
+    </nav>
+  </header>
+  <main>
+    <section id="first">
+      <p>First</p>
+      <a href="" data-router-name='second'>Go To Second</a>
+      <a href="" data-router-name='third'>Go To Third</a>
+    </section>
+
+    <section id="second">
+      <p>Second</p>
+      <a href="" data-router-name='first'>Go To First</a>
+      <a href="" data-router-name='third'>Go To Third</a>
+    </section>
+
+    <section id="third">
+      <p>Third</p>
+      <a href="" data-router-name='first'>Go To First</a>
+      <a href="" data-router-name='second'>Go To Second</a>
+    </section>
+  </main>
+  <script src="../../src/router.js"></script>
+  <script src="./index.js"></script>
+</body>
+</html>
