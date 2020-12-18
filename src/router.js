@@ -8,9 +8,14 @@ class RouterException extends Error {
 
 /**
  *
- * @param {{routes: {path: string, element: HTMLElement, name: string, elementPath: string}[], root: string, entry: HTMLElement, mode: string}}
+ * @param {{routes: {path: string, element: HTMLElement, name: string, elementPath: string}[], rootUrl: string, entry: HTMLElement, mode: string}}
  */
-function Router({ routes, entry, mode }) {
+function Router({ routes, entry, mode, rootUrl = '/' }) {
+  // Prune the root URL. Rules: The Root URL should start with a '/' but not end with a '/'.
+  if (!rootUrl.startsWith('/')) rootUrl = `/${rootUrl}`;
+  if (rootUrl.endsWith('/')) rootUrl = rootUrl.substring(0, rootUrl.length - 1);
+  rootUrl = location.origin + rootUrl;
+
   const ROUTER_NAME_ATTRIBUTE = 'data-router-name';
   const URL_CHANGE_EVENT = 'urlchange';
   let currentRouteEntry = null;
@@ -38,14 +43,21 @@ function Router({ routes, entry, mode }) {
     addEventListener('popstate', handlePopState);
   }
 
+  /**
+   * Handle initial setup and bootstrapping of the page.
+   */
   function handleInitialLoad() {
     currentRouteEntry = getCurrentLocationRoute();
-    routes
-      .filter((route) => route !== currentRouteEntry)
-      .forEach((route) => hideElement(route.element));
+    // Empty the page initially.
+    entry.innerHTML = '';
+
     showElement(currentRouteEntry.element);
   }
 
+  /**
+   * Handle native pop state triggered by the browser.
+   * @param {PopStateEvent} evt
+   */
   function handlePopState(evt) {
     evt.preventDefault();
     entry.dispatchEvent(
@@ -60,7 +72,9 @@ function Router({ routes, entry, mode }) {
     currentRouteEntry = getCurrentLocationRoute();
   }
 
-  // go through all links and map them to the routes.
+  /**
+   * Go through all the links and map them to appropriate routes.
+   */
   function mapLinksToRoutes() {
     const linksToMap = document.querySelectorAll(`a[${ROUTER_NAME_ATTRIBUTE}]`);
 
@@ -80,19 +94,34 @@ function Router({ routes, entry, mode }) {
     });
   }
 
+  /**
+   *
+   * @param {HTMLAnchorElement} linkElement
+   * @param {{path: string, element: HTMLElement, name: string, elementPath: string}} routeEntry
+   */
   function handleLinkClick(linkElement, routeEntry) {
     pushState(routeEntry, linkElement.href);
   }
 
-  // Consider the current mode (history or hash).
+  /**
+   * Get the href property for the route entry.
+   * @param {{path: string, element: HTMLElement, name: string, elementPath: string}} routeEntry
+   */
   function getRouteHref(routeEntry) {
     if (inHistoryMode()) {
-      return routeEntry.path;
+      return rootUrl + routeEntry.path;
     }
 
     return `#${routeEntry.path.substring(1)}`;
   }
 
+  /**
+   * Wrapper over history.pushState. This function dispatches the
+   * URL_CHANGE_EVENT, and updates the current route entry before
+   * calling history.pushState appropriately.
+   * @param {{path: string, element: HTMLElement, name: string, elementPath: string}} routeEntry
+   * @param {string} url
+   */
   function pushState(routeEntry, url) {
     const previousRouteEntry = getCurrentLocationRoute();
     if (previousRouteEntry === routeEntry) {
@@ -111,6 +140,11 @@ function Router({ routes, entry, mode }) {
     history.pushState({}, routeEntry.name, url);
   }
 
+  /**
+   * Handle the URL change event. This function displays the next page
+   * and hides the page being left.
+   * @param {CustomEvent} evt
+   */
   function handleUrlChange(evt) {
     showElement(evt.detail.current.element);
     const previouslyRenderedElement = evt.detail.previous.element;
@@ -120,7 +154,7 @@ function Router({ routes, entry, mode }) {
   }
 
   /**
-   *
+   * Show a specific element.
    * @param {HTMLElement} element
    */
   function showElement(element) {
@@ -128,22 +162,28 @@ function Router({ routes, entry, mode }) {
   }
 
   /**
-   *
+   * Hide a specific element.
    * @param {HTMLElement} element
    */
   function hideElement(element) {
     entry.removeChild(element);
   }
 
+  /**
+   * Get the current route which the user is on.
+   */
   function getCurrentPath() {
     if (inHistoryMode()) {
-      return location.pathname;
+      const currentPathname = location.pathname;
+      const rootPathname = new URL(rootUrl).pathname;
+      const path = currentPathname.substring(rootPathname.length);
+      return path;
     }
     return location.hash || '#';
   }
 
   /**
-   *
+   * Get the route associated with a particular path.
    * @param {string} path
    */
   function getRouteEntryFromPath(path) {
