@@ -29,4 +29,6 @@ const router = new Router({
     // },
   ],
   entry: document.querySelector('main'),
+  mode: 'history',
+  rootUrl: 'examples/same_file_components/',
 });
