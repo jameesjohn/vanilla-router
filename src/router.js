@@ -51,7 +51,38 @@ function Router({ routes, entry, mode, rootUrl = '/' }) {
     // Empty the page initially.
     entry.innerHTML = '';
 
-    showElement(currentRouteEntry.element);
+    fetchAndShowElement(currentRouteEntry);
+    // showElement(currentRouteEntry.element);
+  }
+
+  /**
+   *
+   * @param {{path: string, element: HTMLElement|undefined, name: string, elementPath: string|undefined}} routeEntry
+   */
+  function fetchAndShowElement(routeEntry) {
+    if (routeEntry.element) {
+      showElement(routeEntry.element);
+      return;
+    }
+    if (routeEntry.elementPath) {
+      if (!routeEntry.elementPath.startsWith('/'))
+        routeEntry.elementPath = `/${routeEntry.elementPath}`;
+      fetch(`${rootUrl}${routeEntry.elementPath}`)
+        .then((response) => response.text())
+        .then((response) => {
+          const parser = new DOMParser();
+          const newDocument = parser.parseFromString(response, 'text/html');
+          mapLinksToRoutes(newDocument);
+          // Store it here so we don't fetch it again in the future.
+          routeEntry.element = newDocument.body.firstElementChild;
+          showElement(routeEntry.element);
+        });
+
+      return;
+    }
+    throw new RouterException(
+      'Route entry must have either an element or a path to an element'
+    );
   }
 
   /**
@@ -74,8 +105,9 @@ function Router({ routes, entry, mode, rootUrl = '/' }) {
 
   /**
    * Go through all the links and map them to appropriate routes.
+   * @param {Document} document
    */
-  function mapLinksToRoutes() {
+  function mapLinksToRoutes(document) {
     const linksToMap = document.querySelectorAll(`a[${ROUTER_NAME_ATTRIBUTE}]`);
 
     linksToMap.forEach((linkElement) => {
@@ -146,7 +178,7 @@ function Router({ routes, entry, mode, rootUrl = '/' }) {
    * @param {CustomEvent} evt
    */
   function handleUrlChange(evt) {
-    showElement(evt.detail.current.element);
+    fetchAndShowElement(evt.detail.current);
     const previouslyRenderedElement = evt.detail.previous.element;
     if (previouslyRenderedElement) {
       hideElement(previouslyRenderedElement);
@@ -198,7 +230,7 @@ function Router({ routes, entry, mode, rootUrl = '/' }) {
   }
 
   handleInitialLoad();
-  mapLinksToRoutes();
+  mapLinksToRoutes(document);
   setupListeners();
 
   /**
