@@ -50,3 +50,9 @@ Each route requires the following properties.
 ## Examples
 
 Examples can be found in the `/examples` directory.
+
+## Contributing
+
+The router code can be found in `/src/router.js`.
+
+I'm hoping to convert it to typescript in the near future, and add a build step so it can be published to NPM and available to the world!
